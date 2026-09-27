@@ -2090,42 +2090,113 @@ namespace WebApplication1
                     StringComparer.OrdinalIgnoreCase
                 );
 
-                var broadcastSection = doc.DocumentNode.SelectSingleNode(
-                    "//div[a[contains(@title,'Broadcast Guide')]]"
-                );
-
-                if (broadcastSection != null)
-                {
-                    var rows = broadcastSection.SelectNodes(
-                        ".//div[contains(@class,'facts-row-grid')]"
+                // Find "Broadcast Guide - IN"
+                var broadcastTextNode = doc.DocumentNode
+                    .Descendants()
+                    .FirstOrDefault(x =>
+                        HtmlEntity.DeEntitize(x.InnerText)
+                            .Trim()
+                            .Equals(
+                                "Broadcast Guide - IN",
+                                StringComparison.OrdinalIgnoreCase
+                            )
                     );
 
-                    if (rows != null)
+                if (broadcastTextNode != null)
+                {
+                    // Broadcast heading ke baad ke nodes
+                    var current = broadcastTextNode;
+
+                    while (current != null)
                     {
-                        foreach (var row in rows)
+                        current = current.NextSibling;
+
+                        if (current == null)
+                            break;
+
+                        string text = HtmlEntity.DeEntitize(
+                            current.InnerText
+                        ).Trim();
+
+                        if (string.IsNullOrWhiteSpace(text))
+                            continue;
+
+                        text = Regex.Replace(text, @"\s+", " ").Trim();
+
+                        // Streaming
+                        if (text.Equals(
+                            "Streaming",
+                            StringComparison.OrdinalIgnoreCase))
                         {
-                            var cells = row.SelectNodes("./div");
+                            var valueNode = current.NextSibling;
 
-                            if (cells == null || cells.Count < 2)
-                                continue;
-
-                            string key = HtmlEntity.DeEntitize(
-                                cells[0].InnerText
-                            ).Trim();
-
-                            string value = HtmlEntity.DeEntitize(
-                                cells[1].InnerText
-                            ).Trim();
-
-                            if (!string.IsNullOrWhiteSpace(key))
+                            while (valueNode != null)
                             {
-                                broadcastGuide[key] = value;
+                                string value = HtmlEntity.DeEntitize(
+                                    valueNode.InnerText
+                                ).Trim();
+
+                                value = Regex.Replace(
+                                    value,
+                                    @"\s+",
+                                    " "
+                                ).Trim();
+
+                                if (!string.IsNullOrWhiteSpace(value))
+                                {
+                                    if (!value.Equals(
+                                        "TV",
+                                        StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        broadcastGuide["Streaming"] = value;
+                                    }
+
+                                    break;
+                                }
+
+                                valueNode = valueNode.NextSibling;
                             }
+                        }
+
+                        // TV
+                        if (text.Equals(
+                            "TV",
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            var valueNode = current.NextSibling;
+
+                            while (valueNode != null)
+                            {
+                                string value = HtmlEntity.DeEntitize(
+                                    valueNode.InnerText
+                                ).Trim();
+
+                                value = Regex.Replace(
+                                    value,
+                                    @"\s+",
+                                    " "
+                                ).Trim();
+
+                                if (!string.IsNullOrWhiteSpace(value))
+                                {
+                                    broadcastGuide["TV"] = value;
+                                    break;
+                                }
+
+                                valueNode = valueNode.NextSibling;
+                            }
+                        }
+
+                        // Dono mil gaye to stop
+                        if (
+                            broadcastGuide.ContainsKey("Streaming") &&
+                            broadcastGuide.ContainsKey("TV")
+                        )
+                        {
+                            break;
                         }
                     }
                 }
-
-
                 // ==========================================
                 // FINAL RESPONSE
                 // ==========================================
