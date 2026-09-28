@@ -71,7 +71,7 @@ namespace WebApplication1.Controllers
                 return File(
                     fileBytes,
                     "application/pdf",
-                    "Bhakti-Aur-Jeevan.pdf"
+                    "bhakti-aur-jeevan.pdf"
                 );
             }
             catch (Exception ex)
