@@ -13,7 +13,7 @@ namespace WebApplication1.Controllers
         private readonly IConfiguration _configuration;
         private readonly EbookAccessService _ebookAccessService;
 
-        private const long EbookPriceInPaise = 100;
+        private const long EbookPriceInPaise = 19900;
 
         public PaymentController(
             IConfiguration configuration,

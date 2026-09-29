@@ -7,67 +7,63 @@ namespace WebApplication1.Controllers
     [Route("api/[controller]")]
     public class EbookController : ControllerBase
     {
-        private readonly IWebHostEnvironment _environment;
         private readonly EbookAccessService _ebookAccessService;
 
-        public EbookController(
-            IWebHostEnvironment environment,
-            EbookAccessService ebookAccessService)
+        public EbookController(EbookAccessService ebookAccessService)
         {
-            _environment = environment;
             _ebookAccessService = ebookAccessService;
         }
 
         [HttpGet("download")]
-        public IActionResult DownloadEbook(
-            [FromQuery] string token)
+        public IActionResult DownloadEbook([FromQuery] string token)
         {
             try
             {
+                // 1. Token check
                 if (string.IsNullOrWhiteSpace(token))
                 {
                     return Unauthorized(new
                     {
                         success = false,
-                        message =
-                            "Download token required hai."
+                        message = "Download token required hai."
                     });
                 }
 
-                bool valid =
-                    _ebookAccessService
-                        .ValidateAndConsumeToken(token);
+                // 2. Validate token
+                bool valid = _ebookAccessService
+                    .ValidateAndConsumeToken(token);
 
                 if (!valid)
                 {
                     return Unauthorized(new
                     {
                         success = false,
-                        message =
-                            "Download link invalid ya expire ho gaya hai."
+                        message = "Download link invalid ya expire ho gaya hai."
                     });
                 }
 
-                string filePath =
-                    Path.Combine(
-                        _environment.ContentRootPath,
-                        "Ebook",
-                        "bhakti-aur-jeevan.pdf"
-                    );
+                // 3. PDF path
+                string filePath = Path.Combine(
+                    AppContext.BaseDirectory,
+                    "Ebook",
+                    "bhakti-aur-jeevan.pdf"
+                );
 
+                // 4. Check PDF
                 if (!System.IO.File.Exists(filePath))
                 {
                     return NotFound(new
                     {
                         success = false,
-                        message =
-                            "Ebook file server par nahi mili."
+                        message = "Ebook file server par nahi mili.",
+                        path = filePath
                     });
                 }
 
-                byte[] fileBytes =
-                    System.IO.File.ReadAllBytes(filePath);
+                // 5. Read PDF
+                byte[] fileBytes = System.IO.File.ReadAllBytes(filePath);
 
+                // 6. Download
                 return File(
                     fileBytes,
                     "application/pdf",
@@ -79,8 +75,7 @@ namespace WebApplication1.Controllers
                 return BadRequest(new
                 {
                     success = false,
-                    message =
-                        "Ebook download nahi ho paya.",
+                    message = "Ebook download nahi ho paya.",
                     error = ex.Message
                 });
             }
